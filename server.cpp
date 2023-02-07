@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <HTTPClient.h>
 #include "server.h"
 #include "res.h"
 #include "wifi_credentials.h"
@@ -41,11 +42,33 @@ void ConfigServer::createServer() {
             String password = server->arg("password");
             writeWiFiCredentials(ssid, password);
 
-            WiFi.begin(ssid.c_str(), password.c_str());
+            WiFi.addAP(ssid.c_str(), password.c_str());
+            int times = 0;
+            while (WiFi.run() != WL_CONNECTED) {
+                times++;
+                if (times > 30) {
+                    server->send(200, "text/html", "Could not Connect");
+                    return;
+                }
+                Serial.println(".");
+                delay(100);
+            }
+            Serial.println(WiFi.localIP());
 
             change_wifi_request data;
             data.ssid = ssid;
-            server->send(200, "text/html", responses.change_wifi(data));
+
+            HTTPClient http;
+
+            http.begin("https://google.com/");
+            // http.addHeader("Content-Type", "application/json");
+
+            int responseCode = http.GET();//.POST('{}');
+            String response = responses.change_wifi(data);
+            response += "<h1>" + String(http.getString()) + "</h1>";
+
+
+            server->send(200, "text/html", response.c_str());
 
             end();
         }

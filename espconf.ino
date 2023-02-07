@@ -1,4 +1,5 @@
 #include <WiFi.h>
+#include <WiFiMulti.h>
 #include "server.h"
 #include "wifi_credentials.h"
 
@@ -7,8 +8,8 @@
 #define proto_password "esp12345"
 
 
-IPAddress local_IP(192, 168, 4, 22);
-IPAddress gateway(192, 168, 4, 9);
+IPAddress local_IP(192, 168, 1, 1);
+IPAddress gateway(192, 168, 1, 254);
 IPAddress subnet(255, 255, 255, 0);
 
 
@@ -38,7 +39,7 @@ void setup() {
     }
     else {
         std::tuple<String, String> credentials = readWiFiCredentials();
-        WiFi.begin(std::get<0>(credentials).c_str(), std::get<1>(credentials).c_str());
+        WiFi.addAP(std::get<0>(credentials).c_str(), std::get<1>(credentials).c_str());
     }
 }
 
