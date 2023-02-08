@@ -9,7 +9,7 @@
 
 
 IPAddress local_IP(192, 168, 1, 1);
-IPAddress gateway(192, 168, 1, 254);
+IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 
 
@@ -20,7 +20,7 @@ void setup() {
     Serial.begin(115200);
 
     if (startConfigServer()) {
-        WiFi.mode(WIFI_AP);
+        WiFi.mode(WIFI_AP_STA);
 
         Serial.print("Setting soft-AP configuration ... ");
         bool configReady = WiFi.softAPConfig(local_IP, gateway, subnet);
@@ -38,24 +38,29 @@ void setup() {
         Serial.println("Done");
     }
     else {
-        std::tuple<String, String> credentials = readWiFiCredentials();
-        WiFi.addAP(std::get<0>(credentials).c_str(), std::get<1>(credentials).c_str());
+        String ssid, pass;
+        readWiFiCredentials(ssid, pass);
+        WiFi.begin(ssid.c_str(), pass.c_str());
     }
 }
 
 void loop() {
-    if (startConfigServer()) {
+    if (!server.ended()) {
         server.handleClient();
         return;
     }
 
-    std::tuple<String, String> credentials = readWiFiCredentials();
-    Serial.println(std::get<0>(credentials).c_str());
-    Serial.println(std::get<1>(credentials).c_str());
+    String ssid, pass;
+
+    readWiFiCredentials(ssid, pass);
+    Serial.println(ssid);
+    Serial.println(pass);
+    delay(100);
 }
 
 
 bool startConfigServer() {
-    std::tuple<String, String> credentials = readWiFiCredentials();
-    return std::get<0>(credentials).c_str() != "" || std::get<1>(credentials).c_str() != "";
+    String ssid, pass;
+    readWiFiCredentials(ssid, pass);
+    return ssid.c_str() != "" || pass.c_str() != "";
 }

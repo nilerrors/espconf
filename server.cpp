@@ -39,37 +39,35 @@ void ConfigServer::createServer() {
         }
         else {
             String ssid = server->arg("ssid");
-            String password = server->arg("password");
-            writeWiFiCredentials(ssid, password);
+            String pass = server->arg("pass");
+            writeWiFiCredentials(ssid, pass);
 
-            WiFi.addAP(ssid.c_str(), password.c_str());
+            Serial.print(ssid);
+            Serial.print(" :=: ");
+            Serial.println(pass);
+
+            WiFi.begin(ssid.c_str(), pass.c_str());
+
             int times = 0;
-            while (WiFi.run() != WL_CONNECTED) {
-                times++;
-                if (times > 30) {
+            while (WiFi.status() != WL_CONNECTED) {
+                if (times > 10) {
                     server->send(200, "text/html", "Could not Connect");
                     return;
                 }
-                Serial.println(".");
-                delay(100);
+                times++;
+                Serial.print(".");
+                delay(1000);
             }
+            Serial.println("Connected");
             Serial.println(WiFi.localIP());
 
             change_wifi_request data;
             data.ssid = ssid;
 
-            HTTPClient http;
+            server->send(200, "text/html", responses.change_wifi(data););
+            delay(3000);
 
-            http.begin("https://google.com/");
-            // http.addHeader("Content-Type", "application/json");
-
-            int responseCode = http.GET();//.POST('{}');
-            String response = responses.change_wifi(data);
-            response += "<h1>" + String(http.getString()) + "</h1>";
-
-
-            server->send(200, "text/html", response.c_str());
-
+            WiFi.mode(WIFI_STA);
             end();
         }
     });
@@ -81,16 +79,20 @@ void ConfigServer::createServer() {
 
 void ConfigServer::begin() {
     server->begin();
+    running = true;
 }
 
 void ConfigServer::handleClient() {
-    server->handleClient();
+    if (running) {
+        server->handleClient();
+    }
 }
 
 void ConfigServer::end() {
     delete server;
+    running = false;
 }
 
 bool ConfigServer::ended() {
-	return false;
+	return !running;
 }

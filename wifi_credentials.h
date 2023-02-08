@@ -1,9 +1,9 @@
 #include <Arduino.h>
-#include <EEPROM.h>
+#include <Preferences.h>
 #include <tuple>
 
 
 
-std::tuple<String, String> readWiFiCredentials();
+void readWiFiCredentials(String& ssid, String& pass);
 void writeWiFiCredentials(String ssid, String pass);
 
